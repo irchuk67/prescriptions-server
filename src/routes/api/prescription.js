@@ -7,6 +7,10 @@ const router = express.Router();
 
 router.get('/', verifyToken, async (req, res) => {
     console.log("received request to get all prescriptions")
+    console.log(req.user)
+    if(!req.user) {
+        return;
+    }
     let prescriptions = await fetchPrescriptions(req.headers.authorization, req.user);
     res.status(200).json(prescriptions)
     console.log("request successfully performed. Prescriptions were send to user")

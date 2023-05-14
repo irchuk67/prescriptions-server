@@ -1,5 +1,5 @@
 const express = require('express');
-const {createUser, authenticateUser, updateUser} = require("../../service/userService");
+const {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors} = require("../../service/userService");
 const {userValidator, validateUser} = require("../../validator/user");
 const verifyToken = require("../../middleware/tokenValidator");
 const router = express.Router();
@@ -23,23 +23,26 @@ router.post('/register', userValidator('createUser'), async (req, res) => {
 
 router.post('/auth', async (req, res) => {
     console.log(`received request to authenticate user`)
-    const token = await authenticateUser(req.body);
-    if (!token) {
-        res.status(404).json('user with such email and password wasn`t found');
-        console.log(`request crashed. Prescription with email ${req.body.email} wasn't found`)
+    console.log(req.body)
+    try{
+        const token = await authenticateUser(req.body);
+        res.status(200).json(token);
+        console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
+    }catch (err){
+        res.status(err.code).send(err.error.message)
     }
-    res.status(200).json(token);
-    console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
+
+
 })
 
 router.put('/:userId', verifyToken, userValidator('updateUser'), async (req, res) => {
-    console.log(`received request to update user with id: ${req.user.userId}`)
+    console.log(`received request to update user with id: ${req.params.userId}`)
     const isValid = await validateUser(req, res);
     if (!isValid) {
         return;
     }
 
-    const updatedUser = await updateUser(req.headers.authorization, req.body, req.user.userId);
+    const updatedUser = await updateUser(req.headers.authorization, req.body, req.params.userId);
     const result = {
         userId: updatedUser.data,
         weight: updatedUser.weight,
@@ -50,6 +53,34 @@ router.put('/:userId', verifyToken, userValidator('updateUser'), async (req, res
 
     }
     res.status(201).json(updatedUser);
-    console.log(`request was successfully performed! user with id = ${req.user.userId} was updated`)
+    console.log(`request was successfully performed! user with id = ${req.params.userId} was updated`)
 })
+
+router.get('/user', verifyToken, async (req, res) => {
+  if(!req.user){
+      return;
+  }
+    console.log(req.user)
+
+    const user = await getUserDataByToken(req.user.userId, req.headers.authorization)
+    res.status(200).json(user)
+})
+
+router.get('/doctors', verifyToken, async  (req, res) => {
+    try{
+        const doctors = await getClinicDoctors(req.query.clinic, req.headers.authorization, req.query.searchField, req.query.sortField);
+        res.status(200).json(doctors)
+        console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
+    }catch (err){
+        res.status(err.code).send(err.error.message)
+    }
+
+})
+
+router.patch('/:userId', verifyToken, async (req, res) => {
+    const assignedDoctors = await updateAssignedDoctors(req.params.userId, req.body.doctorId);
+    res.status(200).json(assignedDoctors)
+});
+
+
 module.exports = router;

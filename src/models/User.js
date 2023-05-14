@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema({
     assignedDoctors: {
         type: [String],
         required: false
+    },
+    searchField: {
+        type: String,
+        required: false
     }
 })
 
