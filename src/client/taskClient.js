@@ -12,10 +12,14 @@ const createNewTask = async (taskObj, token) => {
         }});
 }
 
-const fetchAllTasks = async (token, role, userId) => {
+const fetchAllTasks = async (token, role, userId, assigneeId) => {
     const tasks = await MiddlewareService.get(`/api/tasks/` + role + "/" + userId,  {headers: {
         Authorization: token
-        }})
+        },
+        params: {
+            assigneeId: assigneeId
+        }
+    })
     return tasks
 }
 

@@ -1,5 +1,6 @@
 const {createNewUser, authorize, updateUserData, fetchUser, fetchUsersByIds} = require("../client/userClient");
 const User = require('../models/User');
+const {fetchPrescriptions} = require("./prescriptionService");
 
 function createSearchField(userToCreate){
     return `${userToCreate.name} ${userToCreate.surname} ${userToCreate.specialisation}`
@@ -132,14 +133,17 @@ async function getClinicDoctors(clinic, token, searchField= '', sortField='name'
     }
     const ids = users.map(user => user.userId)
     const defaultUsers = await fetchUsersByIds(token, ids, 'doctor');
-    const response = users.map(internalUser => {
-        const user = defaultUsers.filter(userData => userData.id === internalUser.userId)[0];
+    const response = defaultUsers.map(userData => {
+        const user = users.filter(internalUser => internalUser.userId === userData.id)[0];
+        if(!user){
+            return ;
+        }
         return {
-            name: user.name,
-            surname: user.surname,
-            middleName: user.middleName,
-            specialisation: internalUser.specialisation,
-            userId: user.id
+            name: userData.name,
+            surname: userData.surname,
+            middleName: userData.middleName,
+            specialisation: user.specialisation,
+            userId: userData.id
         }
     }).sort((user1, user2) => compareUsers(user1, user2, sortField));
 
@@ -165,5 +169,31 @@ async function updateAssignedDoctors(userId, doctorId) {
 
 }
 
+async function getDoctorPatients(token, doctor, searchField, sortField){
+    const users = await User.find({searchField: new RegExp(searchField, 'i')});
+    const usersIds = users.filter(userData => userData.assignedDoctors.includes(doctor.userId)).map(user => user.userId);
+    if(usersIds.length === 0){
+        return []
+    }
+    const defaultUsers = await fetchUsersByIds(token, usersIds, 'patient');
 
-module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors}
+    const createdPrescriptions = await fetchPrescriptions(token, doctor)
+
+    const response =defaultUsers.map(user => {
+        let lastTask = createdPrescriptions.filter(prescription => prescription.assignee === user.id).sort((prescr1, prescr2) => new Date(prescr1.startDate) - new Date(prescr2.startDate))[-1];
+        if(!lastTask){
+            lastTask = {}
+        }
+        return {
+            userId: user.id,
+            name: user.name,
+            surname: user.surname,
+            middleName: user.middleName,
+            lastPrescription: lastTask.title,
+            lastPrescriptionDate: lastTask.startDate
+        }
+    }).sort((user1, user2) => compareUsers(user1, user2, sortField));
+    return response
+}
+
+module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors, getDoctorPatients}

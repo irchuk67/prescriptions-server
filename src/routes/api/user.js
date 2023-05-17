@@ -1,5 +1,7 @@
 const express = require('express');
-const {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors} = require("../../service/userService");
+const {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors,
+    getDoctorPatients
+} = require("../../service/userService");
 const {userValidator, validateUser} = require("../../validator/user");
 const verifyToken = require("../../middleware/tokenValidator");
 const router = express.Router();
@@ -70,6 +72,17 @@ router.get('/doctors', verifyToken, async  (req, res) => {
     try{
         const doctors = await getClinicDoctors(req.query.clinic, req.headers.authorization, req.query.searchField, req.query.sortField);
         res.status(200).json(doctors)
+        console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
+    }catch (err){
+        res.status(err.code).send(err.error.message)
+    }
+
+})
+
+router.get('/patients', verifyToken, async  (req, res) => {
+    try{
+        const patients = await getDoctorPatients(req.headers.authorization, req.user, req.query.searchField, req.query.sortField)
+        res.status(200).json(patients)
         console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
     }catch (err){
         res.status(err.code).send(err.error.message)

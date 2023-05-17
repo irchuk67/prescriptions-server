@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const {createNewTask, fetchAllTasks, fetchTaskById, deleteTask, updateTask} = require("../client/taskClient");
 const Prescription = mongoose.model('Prescription');
 
-async function fetchPrescriptions(token, user) {
+async function fetchPrescriptions(token, user, assigneeId) {
     const {roles, userId} = user;
     let role;
     if (roles[0] === 'patient') {
@@ -11,7 +11,7 @@ async function fetchPrescriptions(token, user) {
         role = 'creator'
     }
 
-    const tasks = await fetchAllTasks(token, role, userId);
+    const tasks = await fetchAllTasks(token, role, userId, assigneeId);
     let taskIds = tasks.data.map(task => task.id);
     const prescriptions = await Prescription.find({'taskId': {$in: taskIds}});
 
@@ -28,7 +28,7 @@ async function fetchPrescriptions(token, user) {
             createdBy: task.createdBy,
             assignee: task.assignee,
             isReady: task.isReady,
-            medicine: JSON.parse(task.neededInstruments[0])
+            medicines: JSON.parse(task.neededInstruments[0])
         };
     })
 
@@ -85,7 +85,7 @@ async function createPrescription(prescription, token) {
         periodOfRepeat: prescription.periodOfRepeat,
         assignee: prescription.assignee,
         isReady: prescription.isReady,
-        neededInstruments: [JSON.stringify(prescription.medicine)]
+        neededInstruments: [JSON.stringify(prescription.medicines)]
     }
 
     const created = await createNewTask(taskToCreate, token);

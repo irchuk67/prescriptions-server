@@ -71,6 +71,8 @@ const fetchUsersByIds = async (token, ids, role) => {
     });
     return users.data
 }
+
+
 module.exports = {
     createNewUser,
     authorize,
