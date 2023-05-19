@@ -13,14 +13,14 @@ const createNewTask = async (taskObj, token) => {
 }
 
 const fetchAllTasks = async (token, role, userId, assigneeId) => {
-    const tasks = await MiddlewareService.get(`/api/tasks/` + role + "/" + userId,  {headers: {
-        Authorization: token
+    return await MiddlewareService.get(`/api/tasks/` + role + "/" + userId, {
+        headers: {
+            Authorization: token
         },
         params: {
             assigneeId: assigneeId
         }
     })
-    return tasks
 }
 
 const fetchTaskById = async (taskId, token) => {
@@ -46,5 +46,5 @@ module.exports = {
     fetchAllTasks,
     fetchTaskById,
     updateTask,
-    deleteTask
+    deleteTask,
 }

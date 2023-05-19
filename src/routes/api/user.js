@@ -1,6 +1,6 @@
 const express = require('express');
 const {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors,
-    getDoctorPatients
+    getDoctorPatients, getUserDataById
 } = require("../../service/userService");
 const {userValidator, validateUser} = require("../../validator/user");
 const verifyToken = require("../../middleware/tokenValidator");
@@ -85,9 +85,20 @@ router.get('/patients', verifyToken, async  (req, res) => {
         res.status(200).json(patients)
         console.log(`request was successfully performed! user was successfully authenticated in system and token was sent to client`)
     }catch (err){
+        console.log(err)
         res.status(err.code).send(err.error.message)
     }
 
+})
+
+router.get('/patient/:userId', verifyToken, async (req, res) => {
+    if(!req.user){
+        return;
+    }
+    console.log(req.user)
+
+    const user = await getUserDataById(req.params.userId, req.headers.authorization)
+    res.status(200).json(user)
 })
 
 router.patch('/:userId', verifyToken, async (req, res) => {

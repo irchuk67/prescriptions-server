@@ -1,4 +1,4 @@
-const {createNewUser, authorize, updateUserData, fetchUser, fetchUsersByIds} = require("../client/userClient");
+const {createNewUser, authorize, updateUserData, fetchUser, fetchUsersByIds, fetchUserDataById} = require("../client/userClient");
 const User = require('../models/User');
 const {fetchPrescriptions} = require("./prescriptionService");
 
@@ -124,6 +124,7 @@ function compareUsers (user1, user2, sortField) {
         return 0;
     }
 }
+
 async function getClinicDoctors(clinic, token, searchField= '', sortField='name') {
     console.log(sortField)
     const users = await User.find({clinic: clinic, searchField: new RegExp(searchField, 'i')})
@@ -177,13 +178,15 @@ async function getDoctorPatients(token, doctor, searchField, sortField){
     }
     const defaultUsers = await fetchUsersByIds(token, usersIds, 'patient');
 
-    const createdPrescriptions = await fetchPrescriptions(token, doctor)
+    const createdPrescriptions = await fetchPrescriptions(token, doctor);
+    console.log(createdPrescriptions)
 
     const response =defaultUsers.map(user => {
-        let lastTask = createdPrescriptions.filter(prescription => prescription.assignee === user.id).sort((prescr1, prescr2) => new Date(prescr1.startDate) - new Date(prescr2.startDate))[-1];
-        if(!lastTask){
-            lastTask = {}
-        }
+        let userPrescriptions = createdPrescriptions.filter(prescription => prescription.assignee === user.id)
+            .sort((prescr1, prescr2) => new Date(prescr1.startDate) - new Date(prescr2.startDate));
+
+        let lastTask = userPrescriptions.length >= 1 ?
+            userPrescriptions[userPrescriptions.length - 1] : {title: "", startDate: ""};
         return {
             userId: user.id,
             name: user.name,
@@ -196,4 +199,21 @@ async function getDoctorPatients(token, doctor, searchField, sortField){
     return response
 }
 
-module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors, getDoctorPatients}
+async function getUserDataById(userId, token) {
+    const userSaved = await User.findOne({userId: userId});
+    const defaultUserData = await fetchUserDataById(token, userId);
+    console.log(defaultUserData)
+    return {
+        userId: userId,
+        weight: userSaved.weight,
+        height: userSaved.height,
+        name: defaultUserData.name,
+        surname: defaultUserData.surname,
+        middleName: defaultUserData.middleName,
+        birthDate: defaultUserData.birthDate,
+        sex: defaultUserData.sex,
+    }
+}
+
+
+module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors, getDoctorPatients, getUserDataById}

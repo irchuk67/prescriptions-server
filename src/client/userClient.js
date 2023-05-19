@@ -72,11 +72,20 @@ const fetchUsersByIds = async (token, ids, role) => {
     return users.data
 }
 
+const fetchUserDataById = async (token, id) => {
+    const user = await MiddlewareService(`/api/users/${id}`, {
+        headers: {
+            Authorization: token
+        }}
+    )
+    return user.data
+}
 
 module.exports = {
     createNewUser,
     authorize,
     updateUserData,
     fetchUser,
-    fetchUsersByIds
+    fetchUsersByIds,
+    fetchUserDataById
 }
