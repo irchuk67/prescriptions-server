@@ -7,9 +7,11 @@ const MiddlewareService = axios.create(
     });
 
 const createNewTask = async (taskObj, token) => {
-    return await MiddlewareService.post('/api/tasks', taskObj, {headers: {
+    return await MiddlewareService.post('/api/tasks', taskObj, {
+        headers: {
             Authorization: token
-        }});
+        }
+    });
 }
 
 const fetchAllTasks = async (token, role, userId, assigneeId) => {
@@ -24,21 +26,49 @@ const fetchAllTasks = async (token, role, userId, assigneeId) => {
 }
 
 const fetchTaskById = async (taskId, token) => {
-    return await MiddlewareService.get(`/api/tasks/${taskId}`, {headers: {
+    return await MiddlewareService.get(`/api/tasks/${taskId}`, {
+        headers: {
             Authorization: token
-        }})
+        }
+    })
 }
 
 const updateTask = async (taskId, task, token) => {
-    return await MiddlewareService.put(`/api/tasks/${taskId}`, task, {headers: {
+    return await MiddlewareService.put(`/api/tasks/${taskId}`, task, {
+        headers: {
             Authorization: token
-        }});
+        }
+    });
 }
 
 const deleteTask = async (taskId, token) => {
-    return await MiddlewareService.delete(`/api/tasks/${taskId}`, {headers: {
-        Authorization: token
-    }});
+    return await MiddlewareService.delete(`/api/tasks/${taskId}`, {
+        headers: {
+            Authorization: token
+        }
+    });
+}
+
+const fetchDailyTasks = async (token, assigneeId) => {
+    return await MiddlewareService.get("")
+}
+
+const changeTaskStatus = async (token, taskId) => {
+    const response =  await MiddlewareService.patch(`/api/tasks/${taskId}`, {},
+        {
+                headers: {
+                    Authorization: token
+                }
+        })
+    return response.data
+}
+
+const getDailyTasks = async (token) => {
+    return await MiddlewareService.get('/api/tasks/daily', {
+        headers:{
+            Authorization: token
+        }
+    })
 }
 
 module.exports = {
@@ -47,4 +77,6 @@ module.exports = {
     fetchTaskById,
     updateTask,
     deleteTask,
+    changeTaskStatus,
+    getDailyTasks
 }

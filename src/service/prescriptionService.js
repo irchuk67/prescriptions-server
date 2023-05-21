@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const {createNewTask, fetchAllTasks, fetchTaskById, deleteTask, updateTask} = require("../client/taskClient");
+const {createNewTask, fetchAllTasks, fetchTaskById, deleteTask, updateTask, getDailyTasks, changeTaskStatus} = require("../client/taskClient");
 const Prescription = mongoose.model('Prescription');
 
 async function fetchPrescriptions(token, user, assigneeId) {
@@ -56,6 +56,48 @@ async function fetchPrescriptionById(id, token) {
     };
 }
 
+async function fetchDailyPrescriptions(token){
+    const dailyTasks = await getDailyTasks(token);
+    let taskIds = dailyTasks.data.map(task => task.id);
+    const prescriptions = await Prescription.find({'taskId': {$in: taskIds}});
+
+    return prescriptions.map(prescription => {
+        const task = dailyTasks.data.filter(task => task.id === prescription.taskId)[0];
+        return {
+            id: prescription.id,
+            title: task.title,
+            description: task.description,
+            startDate: task.startDate,
+            endDate: task.endDate,
+            needToRepeat: task.needToRepeat,
+            periodOfRepeat: task.periodOfRepeat,
+            createdBy: task.createdBy,
+            assignee: task.assignee,
+            isReady: task.isReady,
+            medicines: JSON.parse(task.neededInstruments[0])
+        };
+    })
+
+}
+
+async function changePrescriptionStatus(token, prescriptionId){
+    const prescription = await Prescription.findById(prescriptionId);
+    const changed =  await changeTaskStatus(token, prescription.taskId);
+    console.log(changed)
+    return {
+        id: prescription._id,
+        title: changed.title,
+        description: changed.description,
+        startDate: changed.startDate,
+        endDate: changed.endDate,
+        needToRepeat: changed.needToRepeat,
+        periodOfRepeat: changed.periodOfRepeat,
+        createdBy: changed.createdBy,
+        assignee: changed.assignee,
+        isReady: changed.isReady,
+        medicines: JSON.parse(changed.neededInstruments[0])
+    }
+}
 async function deletePrescription(id, token) {
     return Prescription.findById(id)
         .then(prescription => {
@@ -132,5 +174,7 @@ module.exports = {
     fetchPrescriptions,
     fetchPrescriptionById,
     deletePrescription,
-    createPrescription
+    createPrescription,
+    fetchDailyPrescriptions,
+    changePrescriptionStatus
 }

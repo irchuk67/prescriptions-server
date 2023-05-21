@@ -1,9 +1,12 @@
 const express = require('express');
-const {createPrescription, fetchPrescriptions, fetchPrescriptionById, updatePrescription, deletePrescription} = require("../../service/prescriptionService");
+const {createPrescription, fetchPrescriptions, fetchPrescriptionById, updatePrescription, deletePrescription,
+    fetchDailyPrescriptions, changePrescriptionStatus
+} = require("../../service/prescriptionService");
 const {CREATED, NOT_FOUND, OK} = require("../../constants/HTTPCodes");
 const verifyToken = require("../../middleware/tokenValidator");
 const {validatePrescription, prescriptionValidator} = require("../../validator/prescription");
 const {validateUser} = require("../../validator/user");
+const {changeTaskStatus} = require("../../client/taskClient");
 const router = express.Router();
 
 router.get('/', verifyToken, async (req, res) => {
@@ -29,7 +32,9 @@ router.get('/:userId', verifyToken, async (req, res) => {
 
 router.get('/:prescriptionId', verifyToken, async (req, res) => {
     console.log("received request to get prescription with id: ", req.params.prescriptionId)
-
+    if(!req.user) {
+        return;
+    }
     let prescription = await fetchPrescriptionById(req.params.prescriptionId, req.headers.authorization);
     if(!prescription){
         res.status(NOT_FOUND).send('no prescription found');
@@ -39,6 +44,29 @@ router.get('/:prescriptionId', verifyToken, async (req, res) => {
     res.status(200).json(prescription);
     console.log(`request successfully performed. Prescription with id = ${req.params.prescriptionId} - send to user`)
 });
+
+router.get('/daily', verifyToken, async (req, res) => {
+    console.log("received request to get list of medicines for user with id: ", req.user.userId);
+    if(!req.user) {
+        return;
+    }
+    const prescriptions = await fetchDailyPrescriptions(req.headers.authorization, req.user.userId)
+    if(prescriptions.length <= 0){
+        res.status(NOT_FOUND)
+    }
+    res.status(OK).json(prescriptions)
+})
+
+router.patch('/:prescriptionId', verifyToken, async (req, res) => {
+    console.log('received request to change prescription status')
+    if(!req.user){
+        return;
+    }
+    const updated = await changePrescriptionStatus(req.headers.authorization, req.params.prescriptionId).catch(err => res.status(500))
+    console.log(updated)
+    res.status(OK).json(updated);
+    console.log('request to change prescription status was successfully performed')
+})
 
 router.post('/',  verifyToken, prescriptionValidator('createPrescription'), async (req, res, next) => {
     const isValid = validatePrescription(req, res);
