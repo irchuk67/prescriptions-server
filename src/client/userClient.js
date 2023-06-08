@@ -28,7 +28,6 @@ const createNewUser = async (userObj) => {
 
 const authorize = async (authenticationObj) => {
     try {
-        console.log(authenticationObj)
         return await MiddlewareService.post('/api/auth', authenticationObj)
     } catch (err) {
         console.log('error while user log in: ', err.response.data);

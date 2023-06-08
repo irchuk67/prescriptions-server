@@ -2,9 +2,11 @@ const express = require('express');
 const cors = require("cors");
 const mongoose = require('mongoose');
 const bodyParser = require("body-parser");
+const dotenv = require('dotenv');
 
+dotenv.config();
 const app = express();
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://receipts:receipts@localhost:27017/receipts');
+mongoose.connect(process.env.MONGODB_URI_PRESCRIPTIONS || 'mongodb://receipts:receipts@localhost:27017/receipts');
 const PORT = process.env.PORT || 5000;
 
 app.use(bodyParser.json())
