@@ -85,10 +85,22 @@ async function authenticateUser(authenticationData) {
     const token = auth.data;
     return token
 }
+async function getAmountOfDoctorPatients(userId, role){
+    let patients;
+    if(role === 'doctor'){
+        patients = await User.find({assignedDoctors: { $elemMatch: {$eq: userId}}});
+        console.log(patients)
+        //  patients = users.filter(userData => userData.assignedDoctors.includes(userId));
+    }
+    return{
+        patientNumber: patients.length
+    }
+}
 
-async function getUserDataByToken(userId, token) {
+async function getUserDataByToken(userId, token, role) {
     const userSaved = await User.findOne({userId: userId});
     const defaultUserData = await fetchUser(token);
+
     console.log(defaultUserData)
     return {
         userId: userId,
@@ -106,6 +118,9 @@ async function getUserDataByToken(userId, token) {
         phoneNumber: defaultUserData.phoneNumber,
         email: defaultUserData.email,
         assignedDoctors: userSaved.assignedDoctors
+/*
+        patientsNumber: patients.length
+*/
     }
 }
 
@@ -216,4 +231,4 @@ async function getUserDataById(userId, token) {
 }
 
 
-module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors, getDoctorPatients, getUserDataById}
+module.exports = {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors, getDoctorPatients, getUserDataById, getAmountOfDoctorPatients}

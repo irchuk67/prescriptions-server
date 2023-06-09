@@ -1,6 +1,6 @@
 const express = require('express');
 const {createUser, authenticateUser, updateUser, getUserDataByToken, getClinicDoctors, updateAssignedDoctors,
-    getDoctorPatients, getUserDataById
+    getDoctorPatients, getUserDataById, getAmountOfDoctorPatients
 } = require("../../service/userService");
 const {userValidator, validateUser} = require("../../validator/user");
 const verifyToken = require("../../middleware/tokenValidator");
@@ -64,7 +64,17 @@ router.get('/user', verifyToken, async (req, res) => {
   }
     console.log(req.user)
 
-    const user = await getUserDataByToken(req.user.userId, req.headers.authorization)
+    const user = await getUserDataByToken(req.user.userId, req.headers.authorization, req.user.roles[0])
+    res.status(200).json(user)
+})
+
+router.get('/patientNumber', verifyToken, async (req, res) => {
+    if(!req.user){
+        return;
+    }
+    console.log(req.user)
+
+    const user = await getAmountOfDoctorPatients(req.user.userId, req.user.roles[0])
     res.status(200).json(user)
 })
 
